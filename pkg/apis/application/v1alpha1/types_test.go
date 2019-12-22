@@ -303,11 +303,14 @@ func TestAppProject_ValidPolicyRules(t *testing.T) {
 		"p, proj:my-proj:my-role, applications, get, my-proj/*-foo, allow",
 		"p, proj:my-proj:my-role, applications, get, my-proj/foo-*, allow",
 		"p, proj:my-proj:my-role, applications, get, my-proj/*-*, allow",
+		"p, proj:my-proj:my-role, applications, get, my-proj/*.*, allow",
 		"p, proj:my-proj:my-role, applications, *, my-proj/foo, allow",
 		"p, proj:my-proj:my-role, applications, create, my-proj/foo, allow",
 		"p, proj:my-proj:my-role, applications, update, my-proj/foo, allow",
 		"p, proj:my-proj:my-role, applications, sync, my-proj/foo, allow",
 		"p, proj:my-proj:my-role, applications, delete, my-proj/foo, allow",
+		"p, proj:my-proj:my-role, applications, action/*, my-proj/foo, allow",
+		"p, proj:my-proj:my-role, applications, action/apps/Deployment/restart, my-proj/foo, allow",
 	}
 	for _, good := range goodPolicies {
 		p.Spec.Roles[0].Policies = []string{good}

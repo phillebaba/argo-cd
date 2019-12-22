@@ -1252,8 +1252,20 @@ var validActions = map[string]bool{
 	"*":        true,
 }
 
+var validActionPatterns = []*regexp.Regexp{
+	regexp.MustCompile("action/.*"),
+}
+
 func isValidAction(action string) bool {
-	return validActions[action]
+	if validActions[action] {
+		return true
+	}
+	for i := range validActionPatterns {
+		if validActionPatterns[i].MatchString(action) {
+			return true
+		}
+	}
+	return false
 }
 
 func validatePolicy(proj string, role string, policy string) error {
@@ -1279,7 +1291,7 @@ func validatePolicy(proj string, role string, policy string) error {
 	}
 	// object
 	object := strings.Trim(policyComponents[4], " ")
-	objectRegexp, err := regexp.Compile(fmt.Sprintf(`^%s/[*\w-]+$`, proj))
+	objectRegexp, err := regexp.Compile(fmt.Sprintf(`^%s/[*\w-.]+$`, proj))
 	if err != nil || !objectRegexp.MatchString(object) {
 		return status.Errorf(codes.InvalidArgument, "invalid policy rule '%s': object must be of form '%s/*' or '%s/<APPNAME>', not '%s'", policy, proj, proj, object)
 	}

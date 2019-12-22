@@ -15,12 +15,12 @@ import (
 	"strings"
 	"time"
 
-	argoexec "github.com/argoproj/pkg/exec"
 	"github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
 	"github.com/argoproj/argo-cd/util"
+	executil "github.com/argoproj/argo-cd/util/exec"
 )
 
 var (
@@ -159,7 +159,7 @@ func (c *nativeHelmChart) ExtractChart(chart string, version string) (string, ut
 	}
 	cmd := exec.Command("tar", "-zxvf", chartPath)
 	cmd.Dir = tempDir
-	_, err = argoexec.RunCommandExt(cmd, argoexec.CmdOpts{})
+	_, err = executil.Run(cmd)
 	if err != nil {
 		_ = os.RemoveAll(tempDir)
 		return "", nil, err

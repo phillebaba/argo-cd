@@ -1037,24 +1037,29 @@ func (s *Server) resolveRevision(ctx context.Context, app *appv1.Application, sy
 	if ambiguousRevision == "" {
 		ambiguousRevision = app.Spec.Source.TargetRevision
 	}
-	if git.IsCommitSHA(ambiguousRevision) {
-		// If it's already a commit SHA, then no need to look it up
+
+	if app.Spec.Source.IsHelm() {
 		return ambiguousRevision, ambiguousRevision, nil
+	} else {
+		if git.IsCommitSHA(ambiguousRevision) {
+			// If it's already a commit SHA, then no need to look it up
+			return ambiguousRevision, ambiguousRevision, nil
+		}
+		repo, err := s.db.GetRepository(ctx, app.Spec.Source.RepoURL)
+		if err != nil {
+			return "", "", err
+		}
+		gitClient, err := git.NewClient(repo.Repo, repo.GetGitCreds(), repo.IsInsecure(), repo.IsLFSEnabled())
+		if err != nil {
+			return "", "", err
+		}
+		commitSHA, err := gitClient.LsRemote(ambiguousRevision)
+		if err != nil {
+			return "", "", err
+		}
+		displayRevision := fmt.Sprintf("%s (%s)", ambiguousRevision, commitSHA)
+		return commitSHA, displayRevision, nil
 	}
-	repo, err := s.db.GetRepository(ctx, app.Spec.Source.RepoURL)
-	if err != nil {
-		return "", "", err
-	}
-	gitClient, err := git.NewClient(repo.Repo, repo.GetGitCreds(), repo.IsInsecure(), repo.IsLFSEnabled())
-	if err != nil {
-		return "", "", err
-	}
-	commitSHA, err := gitClient.LsRemote(ambiguousRevision)
-	if err != nil {
-		return "", "", err
-	}
-	displayRevision := fmt.Sprintf("%s (%s)", ambiguousRevision, commitSHA)
-	return commitSHA, displayRevision, nil
 }
 
 func (s *Server) TerminateOperation(ctx context.Context, termOpReq *application.OperationTerminateRequest) (*application.OperationTerminateResponse, error) {

@@ -784,7 +784,7 @@ func getLocalObjects(app *argoappv1.Application, local, appLabelKey, kubeVersion
 }
 
 func getLocalObjectsString(app *argoappv1.Application, local, appLabelKey, kubeVersion string, kustomizeOptions *argoappv1.KustomizeOptions) []string {
-	res, err := repository.GenerateManifests(local, &repoapiclient.ManifestRequest{
+	res, err := repository.GenerateManifests(local, "/", &repoapiclient.ManifestRequest{
 		ApplicationSource: &app.Spec.Source,
 		AppLabelKey:       appLabelKey,
 		AppLabelValue:     app.Name,
@@ -972,8 +972,7 @@ func NewApplicationDiffCommand(clientOpts *argocdclient.ClientOptions) *cobra.Co
 					}
 
 					foundDiffs = true
-					err = diff.PrintDiff(item.key.Name, target, live)
-					errors.CheckError(err)
+					_ = diff.PrintDiff(item.key.Name, target, live)
 				}
 			}
 			if foundDiffs {
@@ -1298,7 +1297,7 @@ func NewApplicationSyncCommand(clientOpts *argocdclient.ClientOptions) *cobra.Co
 				cluster, err := clusterIf.Get(context.Background(), &clusterpkg.ClusterQuery{Server: app.Spec.Destination.Server})
 				errors.CheckError(err)
 				util.Close(conn)
-				localObjsStrings = getLocalObjectsString(app, local, cluster.ServerVersion, argoSettings.AppLabelKey, argoSettings.KustomizeOptions)
+				localObjsStrings = getLocalObjectsString(app, local, argoSettings.AppLabelKey, cluster.ServerVersion, argoSettings.KustomizeOptions)
 			}
 
 			syncReq := applicationpkg.ApplicationSyncRequest{
@@ -1962,7 +1961,7 @@ func filterResources(command *cobra.Command, resources []*argoappv1.ResourceDiff
 		if resourceName != "" && resourceName != obj.GetName() {
 			continue
 		}
-		if kind != "" && kind != gvk.Kind {
+		if kind != gvk.Kind {
 			continue
 		}
 		copy := obj.DeepCopy()
